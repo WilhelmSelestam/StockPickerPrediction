@@ -20,7 +20,7 @@ df.replace([np.inf, -np.inf], np.nan, inplace=True)
 cols_to_drop = ['date', 'ticker', 'INCREMENTO', 'diff']
 df.drop(columns=[col for col in cols_to_drop if col in df.columns], inplace=True)
 
-# Impute missing numeric values with median (this handles NaNs from early windows)
+# Impute missing numeric values with median (handles NaNs from early windows)
 numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
 df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median())
 
@@ -154,7 +154,23 @@ plt.tight_layout()
 plt.savefig("confusion_matrix_smote.png")
 plt.close()
 
-# 8. Explainability using SHAP on the original RF model
+# 8. Plot Random Forest feature importances (top 20)
+importances = rf.feature_importances_
+indices = np.argsort(importances)[::-1]
+feature_names = X.columns
+
+top_n = 20
+plt.figure(figsize=(12, 6))
+plt.title('Top 20 Feature Importances from Random Forest')
+plt.bar(range(top_n), importances[indices][:top_n], align='center')
+plt.xticks(range(top_n), feature_names[indices][:top_n], rotation=90)
+plt.xlabel('Features')
+plt.ylabel('Importance')
+plt.tight_layout()
+plt.savefig("rf_feature_importance.png")
+plt.close()
+
+# 9. Explainability using SHAP on the original RF model
 explainer = shap.TreeExplainer(rf)
 shap_values = explainer.shap_values(X_test)
 
