@@ -55,16 +55,57 @@ print(classification_report(y_test, y_pred))
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("Recall (Default) for jump events:", recall_score(y_test, y_pred))
 
+# Save confusion matrix for default threshold
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6, 4))
+plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+plt.title('Confusion Matrix (Default Threshold)')
+plt.colorbar()
+tick_marks = np.arange(2)
+plt.xticks(tick_marks, [0, 1])
+plt.yticks(tick_marks, [0, 1])
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+thresh = cm.max() / 2.
+for i in range(cm.shape[0]):
+    for j in range(cm.shape[1]):
+        plt.text(j, i, format(cm[i, j], 'd'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+plt.tight_layout()
+plt.savefig("confusion_matrix_default.png")
+plt.close()
+
 # 6. Adjust threshold to improve recall
 # Get predicted probabilities for the positive class (jump events)
 y_proba = rf.predict_proba(X_test)[:, 1]
-threshold = 0.3  # Lower the threshold from 0.5 to catch more jump events
+threshold = 0.3  # Lower threshold from 0.5 to catch more jump events
 y_pred_adjusted = (y_proba >= threshold).astype(int)
 print("\nClassification Report (Adjusted Threshold = {}):".format(threshold))
 print(classification_report(y_test, y_pred_adjusted))
 print("Recall (Adjusted) for jump events:", recall_score(y_test, y_pred_adjusted))
 
-# Optionally, plot Precision-Recall curve to help choose a threshold
+# Save confusion matrix for adjusted threshold
+cm_adj = confusion_matrix(y_test, y_pred_adjusted)
+plt.figure(figsize=(6, 4))
+plt.imshow(cm_adj, interpolation='nearest', cmap=plt.cm.Blues)
+plt.title('Confusion Matrix (Threshold = {})'.format(threshold))
+plt.colorbar()
+plt.xticks(tick_marks, [0, 1])
+plt.yticks(tick_marks, [0, 1])
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+thresh = cm_adj.max() / 2.
+for i in range(cm_adj.shape[0]):
+    for j in range(cm_adj.shape[1]):
+        plt.text(j, i, format(cm_adj[i, j], 'd'),
+                 horizontalalignment="center",
+                 color="white" if cm_adj[i, j] > thresh else "black")
+plt.tight_layout()
+plt.savefig("confusion_matrix_adjusted.png")
+plt.close()
+
+# Plot Precision-Recall curve to help choose a threshold
 precision, recall, thresholds = precision_recall_curve(y_test, y_proba)
 plt.figure(figsize=(8,6))
 plt.plot(thresholds, precision[:-1], label='Precision')
@@ -74,7 +115,8 @@ plt.ylabel('Score')
 plt.title('Precision and Recall for Different Thresholds')
 plt.legend()
 plt.grid(True)
-plt.show()
+plt.savefig("precision_recall_curve.png")
+plt.close()
 
 # 7. Apply SMOTE to improve recall by oversampling the minority class
 smote = SMOTE(random_state=42)
@@ -92,13 +134,12 @@ print("\nClassification Report (After SMOTE):")
 print(classification_report(y_test, y_pred_sm))
 print("Recall (SMOTE) for jump events:", recall_score(y_test, y_pred_sm))
 
-# Plot confusion matrix for the SMOTE model
+# Save confusion matrix for SMOTE model
 cm_sm = confusion_matrix(y_test, y_pred_sm)
-plt.figure(figsize=(6,4))
+plt.figure(figsize=(6, 4))
 plt.imshow(cm_sm, interpolation='nearest', cmap=plt.cm.Blues)
-plt.title('Confusion Matrix (SMOTE)')
+plt.title('Confusion Matrix (After SMOTE)')
 plt.colorbar()
-tick_marks = np.arange(2)
 plt.xticks(tick_marks, [0, 1])
 plt.yticks(tick_marks, [0, 1])
 plt.xlabel('Predicted Label')
@@ -110,14 +151,18 @@ for i in range(cm_sm.shape[0]):
                  horizontalalignment="center",
                  color="white" if cm_sm[i, j] > thresh else "black")
 plt.tight_layout()
-plt.show()
+plt.savefig("confusion_matrix_smote.png")
+plt.close()
 
-# 8. Explainability using SHAP
-# Create an explainer for the original Random Forest model
+# 8. Explainability using SHAP on the original RF model
 explainer = shap.TreeExplainer(rf)
 shap_values = explainer.shap_values(X_test)
 
-# Plot a summary bar chart for the jump class (class index 1)
+# Save SHAP summary plot (bar plot for jump class, usually index 1)
 plt.figure()
-shap.summary_plot(shap_values[1], X_test, plot_type="bar")
-plt.show()
+shap.summary_plot(shap_values[1], X_test, plot_type="bar", show=False)
+plt.title("SHAP Feature Importance (Bar)")
+plt.savefig("shap_summary_bar.png")
+plt.close()
+
+print("Plots have been saved in your working directory.")
