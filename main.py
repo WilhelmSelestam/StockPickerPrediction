@@ -171,12 +171,17 @@ plt.savefig("rf_feature_importance.png")
 plt.close()
 
 # 9. Explainability using SHAP on the original RF model
-explainer = shap.TreeExplainer(rf)
-shap_values = explainer.shap_values(X_test)
+# Assuming rf is your RandomForestClassifier and X_train is your training data
+explainer = shap.Explainer(rf, X_train)
+shap_values = explainer(X_test, check_additivity=False)
+print("SHAP values shape:", shap_values.values.shape)  # Should output: (1557, 1280, 2)
 
-# Save SHAP summary plot (bar plot for jump class, usually index 1)
+print("X_test shape:", X_test.shape)  # (1557, 1280)
+print("SHAP values shape:", shap_values.values.shape)  # Expected: (1557, 1280, 2)
+
+# Save SHAP summary plot (bar plot for jump class)
 plt.figure()
-shap.summary_plot(shap_values[1], X_test, plot_type="bar", show=False)
+shap.summary_plot(shap_values.values[:, :, 1], X_test, plot_type="bar", show=False)
 plt.title("SHAP Feature Importance (Bar)")
 plt.savefig("shap_summary_bar.png")
 plt.close()
